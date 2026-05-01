@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block page_title %}Resolve Maintenance{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-1">{{ req.device.name }}</h6>
+        <p class="text-muted small mb-3">{{ req.issue_description }}</p>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-success px-4">Mark Resolved</button>
+            <a href="{% url 'maintenance_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

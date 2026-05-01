@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — LabTrack Pro{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Department overview{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card p-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-3 p-3" style="background:#dbeafe;">
+          <i class="bi bi-building fs-4" style="color:#1d4ed8;"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Total Labs</div>
+          <div class="fs-3 fw-bold">{{ total_labs }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card p-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-3 p-3" style="background:#d1fae5;">
+          <i class="bi bi-pc-display fs-4" style="color:#065f46;"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Active Devices</div>
+          <div class="fs-3 fw-bold">{{ total_devices }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card p-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-3 p-3" style="background:#fef3c7;">
+          <i class="bi bi-tools fs-4" style="color:#92400e;"></i>
+        </div>
+        <div>
+          <div class="text-muted small">In Maintenance</div>
+          <div class="fs-3 fw-bold">{{ maintenance_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card p-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-3 p-3" style="background:#ede9fe;">
+          <i class="bi bi-currency-rupee fs-4" style="color:#5b21b6;"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Total Asset Value</div>
+          <div class="fs-3 fw-bold">₹{{ total_current_value|floatformat:0 }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">Purchase: ₹{{ total_purchase_cost|floatformat:0 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts Banner -->
+{% if active_alerts %}
+<div class="alert border-0 mb-4 p-3" style="background:#fef3c7;border-radius:12px;">
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+    <strong>{{ active_alerts.count }} Active Alert{{ active_alerts.count|pluralize }}</strong>
+  </div>
+  {% for alert in active_alerts|slice:":3" %}
+  <div class="small text-muted">• {{ alert.message }}</div>
+  {% endfor %}
+  {% if active_alerts.count > 3 %}
+  <div class="small text-muted">...and {{ active_alerts.count|add:"-3" }} more</div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- Labs Grid -->
+  <div class="col-lg-7">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-semibold mb-0">Labs Overview</h6>
+      {% if request.user.profile.role == 'admin' %}
+      <a href="{% url 'add_lab' %}" class="btn btn-sm text-white" style="background:#1a3a6b;">
+        <i class="bi bi-plus-lg me-1"></i>Add Lab
+      </a>
+      {% endif %}
+    </div>
+    <div class="row g-3">
+      {% for lab in labs %}
+      <div class="col-sm-6">
+        <a href="{% url 'lab_detail' lab.pk %}" class="text-decoration-none">
+          <div class="card stat-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="fw-semibold text-dark">{{ lab.name }}</div>
+                <div class="text-muted small"><i class="bi bi-geo-alt"></i> {{ lab.location }}</div>
+              </div>
+              {% with alert_count=lab.alerts.count %}
+              {% if alert_count > 0 %}
+              <span class="badge bg-danger">{{ alert_count }}</span>
+              {% endif %}
+              {% endwith %}
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-4 text-center">
+                <div class="fw-bold text-success">{{ lab.active_device_count }}</div>
+                <div style="font-size:0.68rem;color:#6b7280;">Active</div>
+              </div>
+              <div class="col-4 text-center">
+                <div class="fw-bold text-warning">{{ lab.maintenance_count }}</div>
+                <div style="font-size:0.68rem;color:#6b7280;">Maint.</div>
+              </div>
+              <div class="col-4 text-center">
+                <div class="fw-bold" style="color:#1a73e8;">₹{{ lab.total_current_value|floatformat:0 }}</div>
+                <div style="font-size:0.68rem;color:#6b7280;">Value</div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-building fs-1 d-block mb-2"></i>
+          No labs yet. <a href="{% url 'add_lab' %}">Add your first lab</a>.
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Chart + Recent Activity -->
+  <div class="col-lg-5">
+    {% if category_data %}
+    <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-3">Cost by Category</h6>
+        <canvas id="categoryChart" height="200"></canvas>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-3">Recent Activity</h6>
+        {% for log in recent_history %}
+        <div class="d-flex gap-2 mb-3">
+          <div class="mt-1">
+            {% if log.action == 'added' %}<span class="badge-active badge rounded-pill px-2">+</span>
+            {% elif log.action == 'moved_maintenance' %}<span class="badge-maintenance badge rounded-pill px-2">!</span>
+            {% elif log.action == 'moved_trash' %}<span class="badge-trash badge rounded-pill px-2">✕</span>
+            {% else %}<span class="badge bg-light text-dark rounded-pill px-2">~</span>
+            {% endif %}
+          </div>
+          <div>
+            <div class="small fw-semibold">{{ log.device.name }}</div>
+            <div class="text-muted" style="font-size:0.75rem;">{{ log.get_action_display }} · {{ log.timestamp|timesince }} ago</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-muted small text-center py-2">No activity yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if category_data %}
+<script>
+const ctx = document.getElementById('categoryChart').getContext('2d');
+new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: [{% for c in category_data %}'{{ c.name }}',{% endfor %}],
+    datasets: [{
+      data: [{% for c in category_data %}{{ c.cost }},{% endfor %}],
+      backgroundColor: ['#1a3a6b','#1a73e8','#34d399','#f59e0b','#ef4444','#8b5cf6','#06b6d4'],
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

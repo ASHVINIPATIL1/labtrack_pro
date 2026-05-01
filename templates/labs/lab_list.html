@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Labs — LabTrack Pro{% endblock %}
+{% block page_title %}All Labs{% endblock %}
+{% block page_subtitle %}Manage your department labs{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-4">
+  {% if request.user.profile.role == 'admin' %}
+  <a href="{% url 'add_lab' %}" class="btn text-white" style="background:#1a3a6b;">
+    <i class="bi bi-plus-lg me-1"></i> Add Lab
+  </a>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  {% for lab in labs %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card stat-card h-100 border-0 shadow-sm" style="transition: transform 0.2s, box-shadow 0.2s;">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="flex-grow-1">
+            <h5 class="fw-bold mb-2" style="color:#1a3a6b;">{{ lab.name }}</h5>
+            <div class="text-muted small"><i class="bi bi-geo-alt me-1" style="color:#666;"></i>{{ lab.location }}</div>
+          </div>
+          {% if request.user.profile.role == 'admin' %}
+          <div class="dropdown ms-2">
+            <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border:1px solid #e0e0e0;"><i class="bi bi-three-dots-vertical"></i></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'edit_lab' lab.pk %}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+              <li><a class="dropdown-item text-danger" href="{% url 'delete_lab' lab.pk %}"><i class="bi bi-trash me-2"></i>Delete</a></li>
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if lab.description %}
+        <p class="text-muted small mb-3" style="line-height:1.4;">{{ lab.description|truncatewords:15 }}</p>
+        {% endif %}
+
+        <div class="row g-2 mb-4 text-center">
+          <div class="col-4">
+            <div class="p-3 rounded-3" style="background:#d1fae5; border-left: 4px solid #10b981;">
+              <div class="fw-bold fs-6" style="color:#059669;">{{ lab.active_device_count }}</div>
+              <div style="font-size:0.75rem; color:#047857; font-weight:500;">Active</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3 rounded-3" style="background:#fef3c7; border-left: 4px solid #f59e0b;">
+              <div class="fw-bold fs-6" style="color:#d97706;">{{ lab.maintenance_count }}</div>
+              <div style="font-size:0.75rem; color:#b45309; font-weight:500;">Maintenance</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3 rounded-3" style="background:#fee2e2; border-left: 4px solid #ef4444;">
+              <div class="fw-bold fs-6" style="color:#dc2626;">{{ lab.trash_count }}</div>
+              <div style="font-size:0.75rem; color:#991b1b; font-weight:500;">Trash</div>
+            </div>
+          </div>
+        </div>
+
+        <hr style="margin:1rem 0; border:none; border-top:1px solid #e5e7eb;">
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="small">
+            <i class="bi bi-currency-rupee" style="color:#1a73e8;"></i>
+            <span style="color:#6b7280;">Value:</span> <strong style="color:#1a3a6b; font-size:1.1rem;">₹{{ lab.total_current_value|floatformat:0 }}</strong>
+          </div>
+          <a href="{% url 'lab_detail' lab.pk %}" class="btn btn-sm text-white" style="background:#1a73e8; border-radius:6px; transition: background 0.2s;">
+            View Lab <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12 text-center py-5 text-muted">
+    <i class="bi bi-building fs-1 d-block mb-2"></i>
+    No labs added yet.
+    {% if request.user.profile.role == 'admin' %}
+    <div><a href="{% url 'add_lab' %}">Add your first lab</a></div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}Maintenance — LabTrack Pro{% endblock %}
+{% block page_title %}Maintenance Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search by device or lab..." id="search-input">
+        <button class="btn btn-outline-secondary" type="button">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </div>
+    </div>
+    <div class="col-md-6 text-end">
+      <a href="{% url 'report_issue' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Report Issue
+      </a>
+    </div>
+  </div>
+
+  <!-- Tabs for status filtering -->
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-bs-toggle="tab" href="#pending" role="tab">
+        Pending <span class="badge bg-danger ms-2">{{ pending_count }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#resolved" role="tab">
+        Resolved <span class="badge bg-success ms-2">{{ resolved_count }}</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Tab content -->
+  <div class="tab-content">
+    <!-- Pending Issues Tab -->
+    <div id="pending" class="tab-pane fade show active" role="tabpanel">
+      {% if pending_requests %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Device</th>
+              <th>Lab</th>
+              <th>Issue</th>
+              <th>Submitted</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for request in pending_requests %}
+            <tr>
+              <td>
+                <strong>{{ request.device.name }}</strong>
+                <br><small class="text-muted">{{ request.device.serial_id }}</small>
+              </td>
+              <td>{{ request.device.lab.name }}</td>
+              <td>{{ request.issue_description|truncatewords:10 }}</td>
+              <td>
+                <small class="text-muted">{{ request.reported_on|date:"d M Y" }}</small>
+              </td>
+              <td>
+                <a href="{% url 'resolve_maintenance' request.id %}" class="btn btn-sm btn-success">
+                  <i class="bi bi-check-circle"></i> Resolve
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info">No pending maintenance requests.</div>
+      {% endif %}
+    </div>
+
+    <!-- Resolved Issues Tab -->
+    <div id="resolved" class="tab-pane fade" role="tabpanel">
+      {% if resolved_requests %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Device</th>
+              <th>Lab</th>
+              <th>Issue</th>
+              <th>Resolved</th>
+              <th>Resolved By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for request in resolved_requests %}
+            <tr>
+              <td>
+                <strong>{{ request.device.name }}</strong>
+                <br><small class="text-muted">{{ request.device.serial_id }}</small>
+              </td>
+              <td>{{ request.device.lab.name }}</td>
+              <td>{{ request.issue_description|truncatewords:10 }}</td>
+              <td>
+                <small class="text-muted">{{ request.resolved_on|date:"d M Y" }}</small>
+              </td>
+              <td>
+                {% if request.resolved_by %}
+                  {{ request.resolved_by.get_full_name|default:request.resolved_by.username }}
+                {% else %}
+                  <em class="text-muted">Auto-closed</em>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info">No resolved maintenance requests.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

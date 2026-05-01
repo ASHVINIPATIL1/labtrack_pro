@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ department.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3">{{ department.name }}</h1>
+      <p class="text-muted mb-0">Labs in this department.</p>
+    </div>
+    <a href="{% url 'add_lab_in_department' department.pk %}" class="btn btn-primary">Add Lab</a>
+  </div>
+
+  <div class="row g-3">
+    {% for lab in department.labs.all %}
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-1">{{ lab.name }}</h5>
+          <p class="text-muted small mb-2">Location: {{ lab.location }}</p>
+          <p class="mb-2">
+            <span class="badge bg-success">{{ lab.working_device_count }} working</span>
+            <span class="badge bg-warning text-dark">{{ lab.maintenance_count }} maintenance</span>
+            <span class="badge bg-danger">{{ lab.trash_count }} trash</span>
+          </p>
+          <a href="{% url 'lab_detail' lab.pk %}" class="stretched-link"></a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-secondary mb-0">No labs have been added to this department yet.</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

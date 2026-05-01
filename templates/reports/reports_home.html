@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-bg-success">
+        <div class="card-body">
+          <h6 class="card-title">Working Devices</h6>
+          <h2>{{ working_count }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-bg-warning">
+        <div class="card-body">
+          <h6 class="card-title">In Maintenance</h6>
+          <h2>{{ maintenance_count }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-bg-danger">
+        <div class="card-body">
+          <h6 class="card-title">Trash</h6>
+          <h2>{{ trash_count }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-bg-info">
+        <div class="card-body">
+          <h6 class="card-title">Active Issues</h6>
+          <h2>{{ issues_count }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Labs Summary -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Labs Summary</h5>
+        </div>
+        <div class="card-body">
+          {% if labs %}
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Lab</th>
+                  <th>Department</th>
+                  <th>Working</th>
+                  <th>Maintenance</th>
+                  <th>Trash</th>
+                  <th>Issues</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in lab_stats %}
+                <tr>
+                  <td><a href="{% url 'lab_detail' stat.lab.id %}">{{ stat.lab.name }}</a></td>
+                  <td>{{ stat.lab.department.name|default:"Unassigned" }}</td>
+                  <td><span class="badge bg-success">{{ stat.working }}</span></td>
+                  <td><span class="badge bg-warning">{{ stat.maintenance }}</span></td>
+                  <td><span class="badge bg-danger">{{ stat.trash }}</span></td>
+                  <td><span class="badge bg-info">{{ stat.issues }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info">No labs assigned to your account.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Section -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <a href="{% url 'export_report_csv' %}" class="btn btn-success">
+        <i class="bi bi-download"></i> Export Report as CSV
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

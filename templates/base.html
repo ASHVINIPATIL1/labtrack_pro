@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LabTrack Pro{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    :root {
+      --sidebar-width: 250px;
+      --primary: #1a3a6b;
+      --accent: #1a73e8;
+    }
+    body { background: #f0f4f8; font-family: 'Segoe UI', sans-serif; }
+
+    /* Sidebar */
+    #sidebar {
+      width: var(--sidebar-width);
+      min-height: 100vh;
+      background: var(--primary);
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      transition: all 0.3s;
+    }
+    #sidebar .sidebar-brand {
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    #sidebar .nav-link {
+      color: rgba(255,255,255,0.75);
+      padding: 0.65rem 1.2rem;
+      border-radius: 8px;
+      margin: 2px 8px;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    #sidebar .nav-link:hover,
+    #sidebar .nav-link.active {
+      color: #fff;
+      background: rgba(255,255,255,0.15);
+    }
+    #sidebar .nav-link i { width: 22px; }
+
+    /* Main content */
+    #main-content {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+    }
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e0e7ef;
+      padding: 0.75rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 99;
+    }
+
+    /* Cards */
+    .stat-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+
+    /* Status badges */
+    .badge-active { background: #d1fae5; color: #065f46; }
+    .badge-maintenance { background: #fef3c7; color: #92400e; }
+    .badge-trash { background: #fee2e2; color: #991b1b; }
+
+    /* Page content padding */
+    .page-content { padding: 1.5rem; }
+
+    /* Tables */
+    .table th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
+
+    /* Alerts sidebar section */
+    .alert-dot {
+      width: 8px; height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: inline-block;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if request.user.is_authenticated %}
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-pc-display-horizontal text-white fs-4"></i>
+      <div>
+        <div class="text-white fw-bold">LabTrack Pro</div>
+        <div class="text-white-50" style="font-size:0.72rem;">Inventory System</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <div class="px-3 mb-1" style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2"></i> Dashboard
+    </a>
+    <a href="{% url 'lab_list' %}" class="nav-link {% if 'lab' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-building"></i> Labs
+    </a>
+    {% if request.user.profile.role == 'admin' %}
+    <a href="{% url 'department_list' %}" class="nav-link {% if 'department' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-diagram-3"></i> Departments
+    </a>
+    {% endif %}
+    <a href="{% url 'maintenance_list' %}" class="nav-link {% if 'maintenance' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-tools"></i> Maintenance
+      {% if pending_maintenance_count > 0 %}
+        <span class="badge bg-danger ms-1" style="font-size:0.65rem;">{{ pending_maintenance_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'reports_home' %}" class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-file-earmark-bar-graph"></i> Reports
+    </a>
+
+    {% if request.user.profile.role == 'admin' %}
+    <div class="px-3 mt-3 mb-1" style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;">Admin</div>
+    <a href="{% url 'user_list' %}" class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-people"></i> Users
+    </a>
+    {% endif %}
+  </div>
+
+  <div style="position:absolute;bottom:1rem;width:100%;padding:0 1rem;">
+    <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:1.2rem; backdrop-filter:blur(10px);">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:1rem;">
+        <div style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg, #1a73e8 0%, #1a3a6b 100%); display:flex; align-items:center; justify-content:center;">
+          <i class="bi bi-person-fill text-white" style="font-size:1.8rem;"></i>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="color:#fff; font-weight:600; font-size:1rem; margin-bottom:3px; word-break:break-word;">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            {% if request.user.profile.role == 'admin' %}
+              <span style="background:#1d4ed8; color:#bfdbfe; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:600;">👨‍💼 Admin</span>
+            {% else %}
+              <span style="background:#059669; color:#a7f3d0; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:600;">👤 Lab Staff</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <a href="{% url 'logout' %}" style="display:flex; align-items:center; gap:10px; color:#f87171; text-decoration:none; font-size:0.95rem; font-weight:500; padding:0.6rem 0.8rem; background:rgba(239,68,68,0.1); border-radius:8px; border:1px solid rgba(239,68,68,0.2); transition:all 0.2s; text-align:center; justify-content:center;">
+        <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div id="main-content">
+  <!-- Topbar -->
+  <div class="topbar d-flex align-items-center justify-content-between">
+    <div>
+      <h6 class="mb-0 fw-semibold text-dark">{% block page_title %}Dashboard{% endblock %}</h6>
+      <small class="text-muted">{% block page_subtitle %}{% endblock %}</small>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      {% if pending_maintenance_count > 0 %}
+      <a href="{% url 'maintenance_list' %}" class="btn btn-sm btn-outline-danger position-relative">
+        <i class="bi bi-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;">
+          {{ pending_maintenance_count }}
+        </span>
+      </a>
+      {% endif %}
+      <span class="text-muted" style="font-size:0.85rem;">
+        <i class="bi bi-calendar3"></i>
+        <span id="current-date"></span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="px-4 pt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="page-content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+{% else %}
+  <div class="min-vh-100">
+    {% block public_content %}{% endblock %}
+  </div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('current-date') && (
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+    })
+  );
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
