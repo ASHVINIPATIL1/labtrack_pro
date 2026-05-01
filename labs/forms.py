@@ -28,22 +28,19 @@ class DeviceForm(forms.ModelForm):
     class Meta:
         model = Device
         fields = [
-            'serial_id', 'name', 'category', 'os_name', 'software_details', 'quantity',
-            'purchase_cost', 'purchase_date', 'useful_life_years', 'salvage_value',
-            'min_threshold', 'notes'
+            'serial_id', 'name', 'os_name', 'software_details', 'ip_address',
+            'device_configuration', 'purchase_cost', 'purchase_date', 'useful_life_years', 'notes'
         ]
         widgets = {
             'serial_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Device ID'}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Dell OptiPlex 7090'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'os_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Windows 11 or None'}),
-            'software_details': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. MS Office, AutoCAD or None'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'os_name': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'One OS per line'}),
+            'software_details': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'One software entry per line'}),
+            'ip_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 192.168.1.100'}),
+            'device_configuration': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Device configuration details'}),
             'purchase_cost': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00', 'step': '0.01'}),
             'purchase_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'useful_life_years': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'salvage_value': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00', 'step': '0.01'}),
-            'min_threshold': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 

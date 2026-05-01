@@ -11,8 +11,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'lab', 'category', 'quantity', 'status', 'purchase_cost']
-    list_filter = ['lab', 'status', 'category']
+    list_display = ['name', 'lab', 'status', 'purchase_cost']
+    list_filter = ['lab', 'status']
     search_fields = ['name', 'serial_id']
 
 @admin.register(DeviceHistory)

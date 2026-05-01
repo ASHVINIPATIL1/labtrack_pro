@@ -176,26 +176,20 @@ def delete_department(request, pk):
 def lab_detail(request, pk):
     lab = get_object_or_404(Lab, pk=pk)
     status_filter = request.GET.get('status', 'working')
-    category_filter = request.GET.get('category', '')
     search = request.GET.get('search', '')
 
-    devices = lab.devices.select_related('category')
+    devices = lab.devices.all()
     if status_filter:
         devices = devices.filter(status=status_filter)
-    if category_filter:
-        devices = devices.filter(category__id=category_filter)
     if search:
         devices = devices.filter(Q(name__icontains=search) | Q(serial_id__icontains=search))
 
-    categories = DeviceCategory.objects.all()
     alerts = Alert.objects.filter(lab=lab, is_dismissed=False)
 
     context = {
         'lab': lab,
         'devices': devices,
-        'categories': categories,
         'status_filter': status_filter,
-        'category_filter': category_filter,
         'search': search,
         'alerts': alerts,
         'active_count': lab.devices.filter(status='working').count(),
@@ -266,24 +260,14 @@ def device_detail(request, pk):
 @login_required
 def edit_device(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    old_qty = device.quantity
     form = DeviceForm(request.POST or None, instance=device)
     if request.method == 'POST' and form.is_valid():
         updated = form.save()
-        if updated.quantity != old_qty:
-            DeviceHistory.objects.create(
-                device=updated,
-                action='quantity_changed',
-                performed_by=request.user,
-                old_value=str(old_qty),
-                new_value=str(updated.quantity)
-            )
-        else:
-            DeviceHistory.objects.create(
-                device=updated,
-                action='updated',
-                performed_by=request.user,
-            )
+        DeviceHistory.objects.create(
+            device=updated,
+            action='updated',
+            performed_by=request.user,
+        )
         _check_alerts(updated)
         messages.success(request, 'Device updated.')
         return redirect('device_detail', pk=pk)
@@ -351,17 +335,6 @@ def add_category(request):
 
 def _check_alerts(device):
     """Create alerts automatically based on device state."""
-    # Low stock
-    if device.is_below_threshold() and device.status == 'working':
-        Alert.objects.get_or_create(
-            device=device,
-            alert_type='low_stock',
-            is_dismissed=False,
-            defaults={
-                'lab': device.lab,
-                'message': f'{device.name} quantity ({device.quantity}) is below minimum threshold ({device.min_threshold}).'
-            }
-        )
     # Maintenance alert
     if device.status == 'maintenance':
         Alert.objects.get_or_create(
